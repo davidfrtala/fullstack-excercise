@@ -5,6 +5,9 @@
   "references": [
     {
       "path": "./apps/frontend"
+    },
+    {
+      "path": "./apps/server"
     }
   ]
 }
