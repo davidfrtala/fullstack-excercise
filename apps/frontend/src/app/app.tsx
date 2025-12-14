@@ -1,31 +1,50 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@homework/ui/card';
+import { TreeView, type TreeDataItem } from '@homework/ui/tree-view';
+
+const data: TreeDataItem[] = [
+  {
+    id: '1',
+    name: 'Item 1',
+    children: [
+      {
+        id: '2',
+        name: 'Item 1.1',
+        children: [
+          {
+            id: '3',
+            name: 'Item 1.1.1',
+          },
+          {
+            id: '4',
+            name: 'Item 1.1.2',
+          },
+        ],
+      },
+      {
+        id: '5',
+        name: 'Item 1.2',
+      },
+    ],
+  },
+  {
+    id: '6',
+    name: 'Item 2',
+  },
+];
 
 export function App() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Hello world</CardTitle>
+          <CardTitle>ImageNet Tree</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat.
+            eiusmod tempor incididunt ut labore et dolore magna aliqua.
           </p>
-          <p>
-            Duis aute irure dolor in reprehenderit in voluptate velit esse
-            cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-            cupidatat non proident, sunt in culpa qui officia deserunt mollit
-            anim id est laborum.
-          </p>
-          <p>
-            Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-            accusantium doloremque laudantium, totam rem aperiam, eaque ipsa
-            quae ab illo inventore veritatis et quasi architecto beatae vitae
-            dicta sunt explicabo.
-          </p>
+          <TreeView data={data} />
         </CardContent>
       </Card>
     </div>
