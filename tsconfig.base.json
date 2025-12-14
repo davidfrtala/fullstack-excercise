@@ -16,6 +16,12 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@homework/source"]
+    "customConditions": ["@homework/source"],
+    "baseUrl": "./",
+    "paths": {
+      "@homework/ui/*": ["libs/ui/src/ui/*"],
+      "@homework/ui/utils": ["libs/ui/src/utils"],
+      "@homework/styles/*": [ "libs/ui/src/styles/*" ]
+    }
   }
 }

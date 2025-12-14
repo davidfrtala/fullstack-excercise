@@ -1,23 +1,34 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import { fileURLToPath } from 'node:url';
+import * as path from 'path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/apps/frontend',
   server: {
-    port: 4200,
+    port: 8000,
     host: 'localhost',
   },
   preview: {
-    port: 4300,
+    port: 8200,
     host: 'localhost',
   },
-  plugins: [react()],
-  // Uncomment this if you are using workers.
-  // worker: {
-  //  plugins: [],
-  // },
+  plugins: [react(), nxViteTsPaths()],
+  resolve: {
+    alias: {
+      '@homework/ui/*': path.resolve(__dirname, '../../libs/ui/src/ui/*'),
+      '@homework/ui/utils': path.resolve(__dirname, '../../libs/ui/src/utils'),
+      '@homework/styles/*': path.resolve(
+        __dirname,
+        '../../libs/ui/src/styles/*'
+      ),
+    },
+  },
   build: {
     outDir: './dist',
     emptyOutDir: true,
