@@ -99,17 +99,15 @@ async function parseXml(filePath: string): Promise<OutputEntry[]> {
 async function main() {
   const startTime = Date.now();
 
-  await parseXml(xmlFilePath)
-    .then(async (entries) =>
-      writeFile(outputFilePath, JSON.stringify(entries, null, 2), 'utf8')
-    )
-    .then(() => {
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      console.log(`Parsing complete in ${duration}ms`);
-      console.log(`Output written to ${outputFilePath}`);
-    })
-    .catch(console.error);
+  const entries = await parseXml(xmlFilePath);
+  await writeFile(outputFilePath, JSON.stringify(entries, null, 2), 'utf8');
+
+  const endTime = Date.now();
+  const duration = endTime - startTime;
+
+  console.log(`Parsing complete in ${duration}ms`);
+  console.log(`${entries.length} entries parsed`);
+  console.log(`Output written to ${outputFilePath}`);
 }
 
 if (require.main === module) {
