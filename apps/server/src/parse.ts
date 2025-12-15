@@ -18,8 +18,8 @@ interface StackFrame {
 }
 
 const ASSETS_PATH = path.join(__dirname, 'assets');
-const XML_FILE_PATH = path.join(ASSETS_PATH, 'structure_released.xml');
-const OUTPUT_FILE_PATH = path.join(ASSETS_PATH, 'out.json');
+const xmlFilePath = path.join(ASSETS_PATH, 'structure_released.xml');
+const outputFilePath = path.join(ASSETS_PATH, 'out.json');
 
 function generateHash(wnid: string, path: string): string {
   const compositeKey = `${wnid}::${path}`;
@@ -96,15 +96,22 @@ async function parseXml(filePath: string): Promise<OutputEntry[]> {
   });
 }
 
-const startTime = Date.now();
-parseXml(XML_FILE_PATH)
-  .then(async (entries) =>
-    writeFile(OUTPUT_FILE_PATH, JSON.stringify(entries, null, 2), 'utf8')
-  )
-  .then(() => {
-    const endTime = Date.now();
-    const duration = endTime - startTime;
-    console.log(`Parsing complete in ${duration}ms`);
-    console.log(`Output written to ${OUTPUT_FILE_PATH}`);
-  })
-  .catch(console.error);
+async function main() {
+  const startTime = Date.now();
+
+  await parseXml(xmlFilePath)
+    .then(async (entries) =>
+      writeFile(outputFilePath, JSON.stringify(entries, null, 2), 'utf8')
+    )
+    .then(() => {
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      console.log(`Parsing complete in ${duration}ms`);
+      console.log(`Output written to ${outputFilePath}`);
+    })
+    .catch(console.error);
+}
+
+if (require.main === module) {
+  main().catch(console.error);
+}
