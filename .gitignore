@@ -44,3 +44,4 @@ Thumbs.db
 vite.config.*.timestamp*
 
 apps/server/src/assets/out.json
+apps/server/src/assets/tree.json
