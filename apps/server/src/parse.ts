@@ -6,6 +6,7 @@ import sax from 'sax';
 
 interface OutputEntry {
   hash: string;
+  parentHash: string | null;
   name: string;
   size: number;
 }
@@ -56,9 +57,23 @@ async function parseXml(filePath: string): Promise<OutputEntry[]> {
         // Build full path from stack
         const path = [...stack.map((s) => s.words), current.words].join(' > ');
 
+        // Calculate current entry's hash
+        const hash = generateHash(current.wnid, path);
+
+        // Calculate parent hash (if parent exists)
+        let parentHash: string | null = null;
+        if (stack.length > 0) {
+          // Build parent path
+          const parentPath = stack.map((s) => s.words).join(' > ');
+          // Get parent from stack
+          const parent = stack[stack.length - 1];
+          parentHash = generateHash(parent.wnid, parentPath);
+        }
+
         // Create entry (without wnid - deduplicating by name only)
         const entry: OutputEntry = {
-          hash: generateHash(current.wnid, path),
+          hash,
+          parentHash,
           name: path,
           size: current.childCount,
         };
