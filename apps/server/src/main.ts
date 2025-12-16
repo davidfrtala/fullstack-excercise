@@ -63,7 +63,7 @@ app.get('/entries/:parentHash', ({ params, query }, res) => {
       const decoded = JSON.parse(
         Buffer.from(cursor, 'base64').toString('utf-8')
       );
-      cursorName = decoded.name;
+      cursorName = decoded.name.toLowerCase();
       cursorHash = decoded.hash;
     } catch {
       res.status(400).json({ error: 'Invalid cursor format' });
@@ -73,7 +73,6 @@ app.get('/entries/:parentHash', ({ params, query }, res) => {
 
   const hasCursor = cursorName && cursorHash;
 
-  // First page: no cursor
   children = db
     .prepare(
       `
@@ -82,10 +81,10 @@ app.get('/entries/:parentHash', ({ params, query }, res) => {
         WHERE parent_hash = ?
         ${
           hasCursor
-            ? `AND (name COLLATE NOCASE > ? OR (name COLLATE NOCASE = ? AND hash > ?))`
+            ? `AND (LOWER(name) > ? OR (LOWER(name) = ? AND hash > ?))`
             : ''
         }
-        ORDER BY name COLLATE NOCASE ASC, hash ASC
+        ORDER BY LOWER(name) ASC, hash ASC
         LIMIT ?
       `
     )
@@ -122,6 +121,11 @@ app.get('/entries/:parentHash', ({ params, query }, res) => {
       }),
     },
   });
+});
+
+app.get('/entries/search', ({ query }, res) => {
+  const { q } = query;
+  res.json([]);
 });
 
 app.get('/tree', (req, res) => {

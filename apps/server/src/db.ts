@@ -27,6 +27,7 @@ export function initializeSchema(db: Database.Database): void {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_parent ON nodes(parent_hash);
     CREATE INDEX IF NOT EXISTS idx_name ON nodes(name);
+    CREATE INDEX IF NOT EXISTS idx_parent_name_lower ON nodes(parent_hash, LOWER(name), hash);
   `);
 }
 
