@@ -3,7 +3,7 @@ import { createReadStream } from 'fs';
 import { writeFile } from 'fs/promises';
 import path from 'path';
 import sax from 'sax';
-import { getDbPath, initializeDatabase } from './db';
+import { initializeDatabase } from './db';
 
 export interface ParsedEntry {
   hash: string;
@@ -118,10 +118,8 @@ async function store(entries: ParsedEntry[]) {
 
   // Re-enable foreign key constraints
   db.pragma('foreign_keys = ON');
-
   db.close();
 
-  console.log(`Database created at ${getDbPath()}`);
   console.log(`${entries.length} entries stored in database`);
 }
 
