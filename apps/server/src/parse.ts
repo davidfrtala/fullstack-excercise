@@ -4,14 +4,14 @@ import { writeFile } from 'fs/promises';
 import path from 'path';
 import sax from 'sax';
 
-interface OutputEntry {
+export interface ParsedEntry {
   hash: string;
   parentHash: string | null;
   name: string;
   size: number;
 }
 
-interface StackFrame {
+export interface StackFrame {
   wnid: string;
   words: string;
   childCount: number;
@@ -26,9 +26,9 @@ function generateHash(wnid: string, path: string): string {
   return createHash('md5').update(compositeKey).digest('hex');
 }
 
-async function parseXml(filePath: string): Promise<OutputEntry[]> {
+async function parseXml(filePath: string): Promise<ParsedEntry[]> {
   return new Promise((resolve, reject) => {
-    const entries: OutputEntry[] = [];
+    const entries: ParsedEntry[] = [];
     const stack: StackFrame[] = [];
 
     const saxStream = sax.createStream(true, { trim: true });
@@ -71,7 +71,7 @@ async function parseXml(filePath: string): Promise<OutputEntry[]> {
         }
 
         // Create entry (without wnid - deduplicating by name only)
-        const entry: OutputEntry = {
+        const entry: ParsedEntry = {
           hash,
           parentHash,
           name: path,

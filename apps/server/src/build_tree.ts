@@ -1,14 +1,8 @@
-import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { readFile, writeFile } from 'fs/promises';
+import { ParsedEntry } from './parse';
 
-interface InputEntry {
-  hash: string;
-  parentHash: string | null;
-  name: string;
-  size: number;
-}
-
-interface TreeNode {
+export interface TreeNode {
   id: string;
   name: string;
   size: number;
@@ -20,12 +14,12 @@ const inputPath = path.join(ASSETS_PATH, 'out.json');
 const outputPath = path.join(ASSETS_PATH, 'tree.json');
 
 /*
- * Builds a tree from a flat array of InputEntry elements.
+ * Builds a tree from a flat array of ParsedEntry elements.
  *
  * Time Complexity: O(n)
  * Space Complexity: O(n)
  */
-function buildTree(entries: InputEntry[]): TreeNode | null {
+export function buildTree(entries: ParsedEntry[]): TreeNode | null {
   if (entries.length === 0) {
     return null;
   }
@@ -74,7 +68,7 @@ async function main() {
   const startTime = Date.now();
 
   const inputData = await readFile(inputPath, 'utf-8');
-  const entries: InputEntry[] = JSON.parse(inputData);
+  const entries: ParsedEntry[] = JSON.parse(inputData);
   const tree = buildTree(entries);
 
   if (!tree) {
