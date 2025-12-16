@@ -42,26 +42,86 @@ app.get('/entries', (req, res): void => {
     childrenUrl: `/entries/${parent.hash}`,
   };
 
-  res.json(data);
+  res.json({ data });
 });
 
-app.get('/entries/:parentHash', (req, res) => {
-  const { parentHash } = req.params;
+app.get('/entries/:parentHash', ({ params, query }, res) => {
+  const { parentHash } = params;
+  const limit = parseInt(query.limit as string) || 5;
+  const cursor = query.cursor as string | undefined;
 
-  const children = db
+  let children: ParsedEntry[];
+  let nextCursor: string | null = null;
+
+  // Decode cursor if provided (base64-encoded JSON with composite key {name, hash})
+  // we have a duplicates of a path name under the same parent hash, so we need to use the hash to differentiate them
+  let cursorName: string | null = null;
+  let cursorHash: string | null = null;
+
+  if (cursor) {
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(cursor, 'base64').toString('utf-8')
+      );
+      cursorName = decoded.name;
+      cursorHash = decoded.hash;
+    } catch {
+      res.status(400).json({ error: 'Invalid cursor format' });
+      return;
+    }
+  }
+
+  const hasCursor = cursorName && cursorHash;
+
+  // First page: no cursor
+  children = db
     .prepare(
-      'SELECT hash, parent_hash as parentHash, name, size FROM nodes WHERE parent_hash = ?'
+      `
+        SELECT hash, parent_hash as parentHash, name, size 
+        FROM nodes 
+        WHERE parent_hash = ?
+        ${
+          hasCursor
+            ? `AND (name COLLATE NOCASE > ? OR (name COLLATE NOCASE = ? AND hash > ?))`
+            : ''
+        }
+        ORDER BY name COLLATE NOCASE ASC, hash ASC
+        LIMIT ?
+      `
     )
-    .all(parentHash) as ParsedEntry[];
+    .all(
+      parentHash,
+      ...(hasCursor ? [cursorName, cursorName, cursorHash] : []),
+      limit + 1
+    ) as ParsedEntry[]; // +1 to check if there's more
 
-  const result = children.map((child: ParsedEntry) => {
-    return {
-      ...child,
-      childrenUrl: child.size > 0 ? `/entries/${child.hash}` : null,
-    };
+  // Check if there are more items
+  const hasMore = children.length > limit;
+  if (hasMore) {
+    children = children.slice(0, limit);
+    const lastItem = children[children.length - 1];
+    // Encode cursor as base64 JSON
+    nextCursor = Buffer.from(
+      JSON.stringify({ name: lastItem.name, hash: lastItem.hash })
+    ).toString('base64');
+  }
+
+  const result = children.map((child: ParsedEntry) => ({
+    ...child,
+    childrenUrl: child.size > 0 ? `/entries/${child.hash}` : null,
+  }));
+
+  res.json({
+    data: result,
+    pagination: {
+      limit,
+      hasMore,
+      ...(nextCursor && {
+        nextCursor,
+        nextChildrenUrl: `/entries/${parentHash}?limit=${limit}&cursor=${nextCursor}`,
+      }),
+    },
   });
-
-  res.json(result);
 });
 
 app.get('/tree', (req, res) => {
