@@ -3,6 +3,7 @@ import { createReadStream } from 'fs';
 import { writeFile } from 'fs/promises';
 import path from 'path';
 import sax from 'sax';
+import { getDbPath, initializeDatabase } from './db';
 
 export interface ParsedEntry {
   hash: string;
@@ -96,11 +97,40 @@ async function parseXml(filePath: string): Promise<ParsedEntry[]> {
   });
 }
 
+async function store(entries: ParsedEntry[]) {
+  const db = initializeDatabase();
+
+  // Temporarily disable foreign key constraints during bulk import
+  db.pragma('foreign_keys = OFF');
+
+  const insert = db.prepare(`
+    INSERT OR REPLACE INTO nodes (hash, parent_hash, name, size)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  const insertMany = db.transaction((entries: ParsedEntry[]) => {
+    for (const entry of entries) {
+      insert.run(entry.hash, entry.parentHash, entry.name, entry.size);
+    }
+  });
+
+  insertMany(entries);
+
+  // Re-enable foreign key constraints
+  db.pragma('foreign_keys = ON');
+
+  db.close();
+
+  console.log(`Database created at ${getDbPath()}`);
+  console.log(`${entries.length} entries stored in database`);
+}
+
 async function main() {
   const startTime = Date.now();
 
   const entries = await parseXml(xmlFilePath);
   await writeFile(outputFilePath, JSON.stringify(entries, null, 2), 'utf8');
+  await store(entries);
 
   const endTime = Date.now();
   const duration = endTime - startTime;
