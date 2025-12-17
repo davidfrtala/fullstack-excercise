@@ -1,15 +1,15 @@
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
 import { ParsedEntry } from './parse';
 import { createDatabase } from './db';
+import {
+  decodeCursor,
+  buildPaginationResponse,
+  type CursorData,
+} from './pagination';
 
 const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-
-const treePath = path.join(__dirname, 'assets', 'tree.json');
-const treeData = JSON.parse(fs.readFileSync(treePath, 'utf-8'));
 
 const db = createDatabase();
 const app = express();
@@ -48,27 +48,14 @@ app.get('/entries/:hash/children', ({ params, query }, res) => {
   const limit = parseInt(query.limit as string) || 10;
   const cursor = query.cursor as string | undefined;
 
-  let nextCursor: string | null = null;
-
   // Decode cursor if provided (base64-encoded JSON with composite key {name, hash})
-  // we have a duplicates of a path name under the same parent hash, so we need to use the hash to differentiate them
-  let cursorName: string | null = null;
-  let cursorHash: string | null = null;
-
-  if (cursor) {
-    try {
-      const decoded = JSON.parse(
-        Buffer.from(cursor, 'base64').toString('utf-8')
-      );
-      cursorName = decoded.name.toLowerCase();
-      cursorHash = decoded.hash;
-    } catch {
-      res.status(400).json({ error: 'Invalid cursor format' });
-      return;
-    }
+  const decodedCursor = decodeCursor(cursor);
+  if (cursor && !decodedCursor) {
+    res.status(400).json({ error: 'Invalid cursor format' });
+    return;
   }
 
-  const hasCursor = cursorName && cursorHash;
+  const hasCursor = decodedCursor !== null;
 
   const children = db
     .prepare(
@@ -87,20 +74,19 @@ app.get('/entries/:hash/children', ({ params, query }, res) => {
     )
     .all(
       hash,
-      ...(hasCursor ? [cursorName, cursorName, cursorHash] : []),
+      ...(hasCursor && decodedCursor
+        ? [decodedCursor.name, decodedCursor.name, decodedCursor.hash]
+        : []),
       limit + 1 // +1 to check if there's more (we could do EXISTS check instead but .. naah, this is a linear set)
     ) as ParsedEntry[];
 
   // Check if there are more items
   const hasMore = children.length > limit;
+  let lastItem: CursorData | null = null;
   if (hasMore) {
-    // Remove the extra item and use it for the cursor
-    const lastItem = children.pop();
-    if (lastItem) {
-      // Encode cursor as base64 JSON
-      nextCursor = Buffer.from(
-        JSON.stringify({ name: lastItem.name, hash: lastItem.hash })
-      ).toString('base64');
+    const poppedItem = children.pop();
+    if (poppedItem) {
+      lastItem = { name: poppedItem.name, hash: poppedItem.hash };
     }
   }
 
@@ -111,14 +97,13 @@ app.get('/entries/:hash/children', ({ params, query }, res) => {
 
   res.json({
     data: result,
-    pagination: {
+    pagination: buildPaginationResponse({
       limit,
       hasMore,
-      ...(nextCursor && {
-        nextCursor,
-        nextChildrenUrl: `/entries/${hash}/children?limit=${limit}&cursor=${nextCursor}`,
-      }),
-    },
+      lastItem,
+      buildNextUrl: (nextCursor) =>
+        `/entries/${hash}/children?limit=${limit}&cursor=${nextCursor}`,
+    }),
   });
 });
 
@@ -134,23 +119,13 @@ app.get('/entries/search', ({ query }, res) => {
   }
 
   // Decode cursor if provided (base64-encoded JSON with composite key {name, hash})
-  let cursorName: string | null = null;
-  let cursorHash: string | null = null;
-
-  if (cursor) {
-    try {
-      const decoded = JSON.parse(
-        Buffer.from(cursor, 'base64').toString('utf-8')
-      );
-      cursorName = decoded.name.toLowerCase();
-      cursorHash = decoded.hash;
-    } catch {
-      res.status(400).json({ error: 'Invalid cursor format' });
-      return;
-    }
+  const decodedCursor = decodeCursor(cursor);
+  if (cursor && !decodedCursor) {
+    res.status(400).json({ error: 'Invalid cursor format' });
+    return;
   }
 
-  const hasCursor = cursorName && cursorHash;
+  const hasCursor = decodedCursor !== null;
 
   // search only the last segment of the name (case-insensitive)
   // Match at the end of the last segment only
@@ -212,7 +187,9 @@ app.get('/entries/search', ({ query }, res) => {
       )
       .all(
         searchTerm,
-        ...(hasCursor ? [cursorName, cursorName, cursorHash] : []),
+        ...(hasCursor && decodedCursor
+          ? [decodedCursor.name, decodedCursor.name, decodedCursor.hash]
+          : []),
         limit,
         limit
       ) as (ParsedEntry & {
@@ -227,16 +204,14 @@ app.get('/entries/search', ({ query }, res) => {
       queryResult.length > 0 ? Boolean(queryResult[0].has_more) : false;
 
     // Get the last search match for cursor (need to find it from results)
-    let nextCursor: string | null = null;
+    let lastItem: CursorData | null = null;
     if (hasMore && queryResult.length > 0) {
       // Find the last match (depth = 0) in the results, ordered by match_hash
       const matches = queryResult.filter((r) => r.depth === 0);
       if (matches.length > 0) {
         // Get the last match by match_hash (they're already ordered)
         const lastMatch = matches[matches.length - 1];
-        nextCursor = Buffer.from(
-          JSON.stringify({ name: lastMatch.name, hash: lastMatch.hash })
-        ).toString('base64');
+        lastItem = { name: lastMatch.name, hash: lastMatch.hash };
       }
     }
 
@@ -266,16 +241,15 @@ app.get('/entries/search', ({ query }, res) => {
 
     res.json({
       data,
-      pagination: {
+      pagination: buildPaginationResponse({
         limit,
         hasMore,
-        ...(nextCursor && {
-          nextCursor,
-          nextChildrenUrl: `/entries/search?q=${encodeURIComponent(
-            q
+        lastItem,
+        buildNextUrl: (nextCursor) =>
+          `/entries/search?q=${encodeURIComponent(
+            q as string
           )}&limit=${limit}&cursor=${nextCursor}`,
-        }),
-      },
+      }),
     });
   } catch (error) {
     console.error('Search error:', error);
