@@ -22,11 +22,22 @@ const ASSETS_PATH = path.join(__dirname, 'assets');
 const xmlFilePath = path.join(ASSETS_PATH, 'structure_released.xml');
 const outputFilePath = path.join(ASSETS_PATH, 'out.json');
 
+/**
+ * Generates a hash for a given wnid and path
+ * @param wnid - The wnid of the entry
+ * @param path - The path of the entry
+ * @returns The hash of the entry
+ */
 function generateHash(wnid: string, path: string): string {
   const compositeKey = `${wnid}::${path}`;
   return createHash('md5').update(compositeKey).digest('hex');
 }
 
+/**
+ * Parses an XML file and returns an array of parsed entries
+ * @param filePath - The path to the XML file
+ * @returns An array of parsed entries
+ */
 async function parseXml(filePath: string): Promise<ParsedEntry[]> {
   return new Promise((resolve, reject) => {
     const entries: ParsedEntry[] = [];
@@ -97,6 +108,10 @@ async function parseXml(filePath: string): Promise<ParsedEntry[]> {
   });
 }
 
+/**
+ * Stores an array of parsed entries in the database
+ * @param entries - The array of parsed entries
+ */
 async function store(entries: ParsedEntry[]) {
   const db = initializeDatabase();
 
@@ -123,6 +138,9 @@ async function store(entries: ParsedEntry[]) {
   console.log(`${entries.length} entries stored in database`);
 }
 
+/**
+ * Main function to parse the XML file, store the entries in the database, and write the output to a file
+ */
 async function main() {
   const startTime = Date.now();
 

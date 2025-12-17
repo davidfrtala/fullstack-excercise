@@ -13,11 +13,13 @@ const ASSETS_PATH = path.join(__dirname, 'assets');
 const inputPath = path.join(ASSETS_PATH, 'out.json');
 const outputPath = path.join(ASSETS_PATH, 'tree.json');
 
-/*
+/**
  * Builds a tree from a flat array of ParsedEntry elements.
  *
  * Time Complexity: O(n)
  * Space Complexity: O(n)
+ * @param entries - The array of parsed entries
+ * @returns The root node of the tree
  */
 export function buildTree(entries: ParsedEntry[]): TreeNode | null {
   if (entries.length === 0) {
@@ -64,6 +66,9 @@ export function buildTree(entries: ParsedEntry[]): TreeNode | null {
   return root;
 }
 
+/**
+ * Main function to build the tree and write the output to a file
+ */
 async function main() {
   const startTime = Date.now();
 

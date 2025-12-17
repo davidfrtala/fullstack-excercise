@@ -76,26 +76,43 @@
         "executor": "nx:noop"
       },
       "serve": {
-        "continuous": true,
-        "executor": "@nx/js:node",
+        "executor": "nx:run-script",
         "defaultConfiguration": "development",
-        "dependsOn": [
-          "build"
-        ],
         "options": {
-          "buildTarget": "@homework/server:build",
-          "runBuildTargetDependencies": false
+          "script": "dev",
+          "cwd": "apps/server"
         },
         "configurations": {
           "development": {
-            "buildTarget": "@homework/server:build:development"
+            "script": "dev",
+            "cwd": "apps/server"
           },
           "production": {
-            "buildTarget": "@homework/server:build:production"
+            "script": "start",
+            "cwd": "apps/server"
           }
+        }
+      },
+      "parse": {
+        "executor": "nx:run-script",
+        "options": {
+          "script": "parse",
+          "cwd": "apps/server"
+        }
+      },
+      "start": {
+        "executor": "nx:run-script",
+        "options": {
+          "script": "start",
+          "cwd": "apps/server"
         }
       }
     }
+  },
+  "scripts": {
+    "parse": "ts-node src/parse.ts",
+    "start": "ts-node src/main.ts",
+    "dev": "tsx watch src/main.ts"
   },
   "dependencies": {}
 }
