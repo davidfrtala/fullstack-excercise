@@ -1,17 +1,12 @@
-import path from 'path';
-import { readFile, writeFile } from 'fs/promises';
-import { ParsedEntry } from './parse';
+import { ParsedEntry } from '@homework/server/src/parse';
 
 export interface TreeNode {
   id: string;
   name: string;
   size: number;
   children: TreeNode[];
+  hasMore?: boolean; // Pagination: indicates if more children can be loaded
 }
-
-const ASSETS_PATH = path.join(__dirname, 'assets');
-const inputPath = path.join(ASSETS_PATH, 'out.json');
-const outputPath = path.join(ASSETS_PATH, 'tree.json');
 
 /**
  * Builds a tree from a flat array of ParsedEntry elements.
@@ -64,33 +59,4 @@ export function buildTree(entries: ParsedEntry[]): TreeNode | null {
   }
 
   return root;
-}
-
-/**
- * Main function to build the tree and write the output to a file
- */
-async function main() {
-  const startTime = Date.now();
-
-  const inputData = await readFile(inputPath, 'utf-8');
-  const entries: ParsedEntry[] = JSON.parse(inputData);
-  const tree = buildTree(entries);
-
-  if (!tree) {
-    console.error('Failed to build tree');
-    return;
-  }
-
-  const output = JSON.stringify(tree, null, 2);
-  await writeFile(outputPath, output, 'utf-8');
-
-  const endTime = Date.now();
-  const duration = endTime - startTime;
-
-  console.log(`Tree built in ${duration}ms`);
-  console.log(`Output written to ${outputPath}`);
-}
-
-if (require.main === module) {
-  main().catch(console.error);
 }
