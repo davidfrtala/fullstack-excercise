@@ -25,17 +25,17 @@ export function initializeSchema(db: Database.Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS nodes (
       hash TEXT PRIMARY KEY,
-      parent_hash TEXT,
+      parentHash TEXT,
       name TEXT,
       size INTEGER,
-      FOREIGN KEY (parent_hash) REFERENCES nodes(hash)
+      FOREIGN KEY (parentHash) REFERENCES nodes(hash)
     )
   `);
 
   db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_parent ON nodes(parent_hash);
+    CREATE INDEX IF NOT EXISTS idx_parent ON nodes(parentHash);
     CREATE INDEX IF NOT EXISTS idx_name ON nodes(name);
-    CREATE INDEX IF NOT EXISTS idx_parent_name_lower ON nodes(parent_hash, LOWER(name), hash);
+    CREATE INDEX IF NOT EXISTS idx_parent_name_lower ON nodes(parentHash, LOWER(name), hash);
   `);
 }
 

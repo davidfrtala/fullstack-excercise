@@ -119,7 +119,7 @@ async function store(entries: ParsedEntry[]) {
   db.pragma('foreign_keys = OFF');
 
   const insert = db.prepare(`
-    INSERT OR REPLACE INTO nodes (hash, parent_hash, name, size)
+    INSERT OR REPLACE INTO nodes (hash, parentHash, name, size)
     VALUES (?, ?, ?, ?)
   `);
 

@@ -15,7 +15,7 @@ const db = createDatabase();
 const app = express();
 
 type EntryNody = ParsedEntry & {
-  children_url: string | null;
+  childrenUrl: string | null;
 };
 
 app.use(cors());
@@ -25,9 +25,9 @@ app.get('/', (req, res) => {
 });
 
 app.get('/entries', (req, res): void => {
-  // Get the root entry (parent_hash is NULL)
+  // Get the root entry (parentHash is NULL)
   const parent = db
-    .prepare('SELECT * FROM nodes WHERE parent_hash IS NULL')
+    .prepare('SELECT * FROM nodes WHERE parentHash IS NULL')
     .get() as ParsedEntry | undefined;
 
   if (!parent) {
@@ -37,7 +37,7 @@ app.get('/entries', (req, res): void => {
 
   const data: EntryNody = {
     ...parent,
-    children_url: `/entries/${parent.hash}/children`,
+    childrenUrl: `/entries/${parent.hash}/children`,
   };
 
   res.json({ data });
@@ -62,7 +62,7 @@ app.get('/entries/:hash/children', ({ params, query }, res) => {
       `
         SELECT *
         FROM nodes 
-        WHERE parent_hash = ?
+        WHERE parentHash = ?
         ${
           hasCursor
             ? `AND (LOWER(name) > ? OR (LOWER(name) = ? AND hash > ?))`
@@ -92,7 +92,7 @@ app.get('/entries/:hash/children', ({ params, query }, res) => {
 
   const result = children.map((child: ParsedEntry) => ({
     ...child,
-    children_url: child.size > 0 ? `/entries/${child.hash}/children` : null,
+    childrenUrl: child.size > 0 ? `/entries/${child.hash}/children` : null,
   }));
 
   res.json({
@@ -139,7 +139,7 @@ app.get('/entries/search', ({ query }, res) => {
         `
         WITH RECURSIVE search_matches AS (
           SELECT
-          n.*,
+            n.*,
             0 as depth,
             ROW_NUMBER() OVER (ORDER BY LOWER(n.name) ASC, n.hash ASC) as row_num
           FROM nodes n
@@ -159,30 +159,30 @@ app.get('/entries/search', ({ query }, res) => {
         ancestor_paths AS (
           SELECT 
             pm.hash,
-            pm.parent_hash,
+            pm.parentHash,
             pm.name,
             pm.size,
             0 as depth,
-            pm.hash as match_hash
+            pm.hash as matchHash
           FROM paginated_matches pm
           
           UNION ALL
           
           SELECT 
             n.hash, 
-            n.parent_hash, 
+            n.parentHash, 
             n.name, 
             n.size, 
             ap.depth + 1, 
-            ap.match_hash
+            ap.matchHash
           FROM nodes n
-          INNER JOIN ancestor_paths ap ON n.hash = ap.parent_hash
+          INNER JOIN ancestor_paths ap ON n.hash = ap.parentHash
         )
         SELECT 
           ap.*,
           (SELECT has_more FROM has_more_flag) as has_more
         FROM ancestor_paths ap
-        ORDER BY ap.match_hash, ap.depth DESC
+        ORDER BY ap.matchHash, ap.depth DESC
         `
       )
       .all(
@@ -193,9 +193,9 @@ app.get('/entries/search', ({ query }, res) => {
         limit,
         limit
       ) as (ParsedEntry & {
-      parent_hash: string;
+      parentHash: string;
       depth: number;
-      match_hash: string;
+      matchHash: string;
       has_more: number;
     })[];
 
@@ -206,10 +206,10 @@ app.get('/entries/search', ({ query }, res) => {
     // Get the last search match for cursor (need to find it from results)
     let lastItem: CursorData | null = null;
     if (hasMore && queryResult.length > 0) {
-      // Find the last match (depth = 0) in the results, ordered by match_hash
+      // Find the last match (depth = 0) in the results, ordered by matchHash
       const matches = queryResult.filter((r) => r.depth === 0);
       if (matches.length > 0) {
-        // Get the last match by match_hash (they're already ordered)
+        // Get the last match by matchHash (they're already ordered)
         const lastMatch = matches[matches.length - 1];
         lastItem = { name: lastMatch.name, hash: lastMatch.hash };
       }
@@ -233,8 +233,7 @@ app.get('/entries/search', ({ query }, res) => {
     const data = results.map((result) => {
       return {
         ...result,
-        parentHash: result.parent_hash,
-        children_url:
+        childrenUrl:
           result.size > 0 ? `/entries/${result.hash}/children` : null,
       };
     });
