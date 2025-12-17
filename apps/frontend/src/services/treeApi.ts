@@ -1,13 +1,13 @@
-import { ParsedEntry } from '@homework/server/src/parse';
-
 const API_BASE_URL = 'http://localhost:3000';
-
-export interface EntryWithChildrenUrl extends ParsedEntry {
-  childrenUrl: string | null;
+export interface TreeNodeData {
+  hash: string;
+  parentHash: string | null;
+  name: string;
+  size: number;
 }
 
-export interface ChildrenResponse {
-  data: EntryWithChildrenUrl[];
+export interface PaginatedResponse {
+  data: TreeNodeData[];
   pagination: {
     limit: number;
     hasMore: boolean;
@@ -17,7 +17,7 @@ export interface ChildrenResponse {
 }
 
 export interface RootResponse {
-  data: EntryWithChildrenUrl;
+  data: TreeNodeData;
 }
 
 /**
@@ -32,13 +32,38 @@ export async function fetchRoot(): Promise<RootResponse> {
 }
 
 /**
+ * Searches for entries matching the query
+ */
+export async function searchEntries(
+  query: string,
+  cursor?: string,
+  limit = 100
+): Promise<PaginatedResponse> {
+  const params = new URLSearchParams({
+    q: query,
+    limit: limit.toString(),
+  });
+  if (cursor) {
+    params.append('cursor', cursor);
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/entries/search?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to search entries: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+/**
  * Fetches children of a node with pagination
  */
 export async function fetchNodeChildren(
   hash: string,
   cursor?: string,
-  limit = 10
-): Promise<ChildrenResponse> {
+  limit = 100
+): Promise<PaginatedResponse> {
   const params = new URLSearchParams({
     limit: limit.toString(),
   });

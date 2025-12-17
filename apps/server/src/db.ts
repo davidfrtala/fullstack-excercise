@@ -28,6 +28,7 @@ export function initializeSchema(db: Database.Database): void {
       parentHash TEXT,
       name TEXT,
       size INTEGER,
+      lastSegment TEXT,
       FOREIGN KEY (parentHash) REFERENCES nodes(hash)
     )
   `);
@@ -36,6 +37,7 @@ export function initializeSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_parent ON nodes(parentHash);
     CREATE INDEX IF NOT EXISTS idx_name ON nodes(name);
     CREATE INDEX IF NOT EXISTS idx_parent_name_lower ON nodes(parentHash, LOWER(name), hash);
+    CREATE INDEX IF NOT EXISTS idx_last_segment_lower ON nodes(LOWER(lastSegment));
   `);
 }
 

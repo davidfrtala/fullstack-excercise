@@ -34,6 +34,14 @@ function generateHash(wnid: string, path: string): string {
 }
 
 /**
+ * Extracts the last segment from a name (everything after the last " > ")
+ */
+function extractLastSegment(name: string): string {
+  const lastIndex = name.lastIndexOf(' > ');
+  return lastIndex === -1 ? name : name.substring(lastIndex + 3);
+}
+
+/**
  * Parses an XML file and returns an array of parsed entries
  * @param filePath - The path to the XML file
  * @returns An array of parsed entries
@@ -119,13 +127,19 @@ async function store(entries: ParsedEntry[]) {
   db.pragma('foreign_keys = OFF');
 
   const insert = db.prepare(`
-    INSERT OR REPLACE INTO nodes (hash, parentHash, name, size)
-    VALUES (?, ?, ?, ?)
+    INSERT OR REPLACE INTO nodes (hash, parentHash, name, size, lastSegment)
+    VALUES (?, ?, ?, ?, ?)
   `);
 
   const insertMany = db.transaction((entries: ParsedEntry[]) => {
     for (const entry of entries) {
-      insert.run(entry.hash, entry.parentHash, entry.name, entry.size);
+      insert.run(
+        entry.hash,
+        entry.parentHash,
+        entry.name,
+        entry.size,
+        extractLastSegment(entry.name)
+      );
     }
   });
 

@@ -129,23 +129,23 @@ app.get('/entries/search', ({ query }, res) => {
 
   const hasCursor = decodedCursor !== null;
 
-  // search only the last segment of the name (case-insensitive)
-  // Match at the end of the last segment only
-  const searchTerm = `%${q.trim().toLowerCase()}`;
+  // search anywhere in the lastSegment (case-insensitive)
+  const searchTerm = `%${q.trim().toLowerCase()}%`;
 
   try {
     // paginate search matches and get all ancestor paths
     // Uses limit+1 to check if there are more matches
+    // Use indexed lastSegment column for fast searches (much faster than REGEXP)
     const queryResult = db
       .prepare(
         `
-        WITH RECURSIVE search_matches AS (
+        WITH search_matches AS (
           SELECT
             n.*,
             0 as depth,
             ROW_NUMBER() OVER (ORDER BY LOWER(n.name) ASC, n.hash ASC) as row_num
           FROM nodes n
-          WHERE LOWER(n.name) LIKE ?
+          WHERE LOWER(n.lastSegment) LIKE ?
           ${
             hasCursor
               ? `AND (LOWER(n.name) > ? OR (LOWER(n.name) = ? AND n.hash > ?))`
