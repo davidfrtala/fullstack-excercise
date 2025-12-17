@@ -45,8 +45,8 @@ app.get('/entries', (req, res): void => {
   res.json({ data });
 });
 
-app.get('/entries/:parentHash', ({ params, query }, res) => {
-  const { parentHash } = params;
+app.get('/entries/:hash/children', ({ params, query }, res) => {
+  const { hash } = params;
   const limit = parseInt(query.limit as string) || 5;
   const cursor = query.cursor as string | undefined;
 
@@ -89,7 +89,7 @@ app.get('/entries/:parentHash', ({ params, query }, res) => {
       `
     )
     .all(
-      parentHash,
+      hash,
       ...(hasCursor ? [cursorName, cursorName, cursorHash] : []),
       limit + 1
     ) as ParsedEntry[]; // +1 to check if there's more
@@ -107,7 +107,7 @@ app.get('/entries/:parentHash', ({ params, query }, res) => {
 
   const result = children.map((child: ParsedEntry) => ({
     ...child,
-    childrenUrl: child.size > 0 ? `/entries/${child.hash}` : null,
+    childrenUrl: child.size > 0 ? `/entries/${child.hash}/children` : null,
   }));
 
   res.json({
@@ -117,7 +117,7 @@ app.get('/entries/:parentHash', ({ params, query }, res) => {
       hasMore,
       ...(nextCursor && {
         nextCursor,
-        nextChildrenUrl: `/entries/${parentHash}?limit=${limit}&cursor=${nextCursor}`,
+        nextChildrenUrl: `/entries/${hash}/children?limit=${limit}&cursor=${nextCursor}`,
       }),
     },
   });
