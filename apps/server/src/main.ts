@@ -27,7 +27,9 @@ app.get('/', (req, res) => {
 app.get('/entries', (req, res): void => {
   // Get the root entry (parentHash is NULL)
   const parent = db
-    .prepare('SELECT * FROM nodes WHERE parentHash IS NULL')
+    .prepare(
+      'SELECT hash, name, size, parentHash FROM nodes WHERE parentHash IS NULL'
+    )
     .get() as ParsedEntry | undefined;
 
   if (!parent) {
@@ -60,7 +62,7 @@ app.get('/entries/:hash/children', ({ params, query }, res) => {
   const children = db
     .prepare(
       `
-        SELECT *
+        SELECT hash, name, size, parentHash
         FROM nodes 
         WHERE parentHash = ?
         ${
@@ -185,7 +187,10 @@ app.get('/entries/search', ({ query }, res) => {
           FROM ancestor_paths ap
         )
         SELECT 
-          dp.*,
+          dp.hash, 
+          dp.name, 
+          dp.size, 
+          dp.parentHash, 
           (SELECT has_more FROM has_more_flag) as has_more
         FROM deduplicated_paths dp
         WHERE dp.rn = 1
@@ -237,7 +242,8 @@ app.get('/entries/search', ({ query }, res) => {
 
     const results = queryResult;
 
-    const data = results.map((result) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const data = results.map(({ has_more, ...result }) => {
       return {
         ...result,
         childrenUrl:
