@@ -177,12 +177,19 @@ app.get('/entries/search', ({ query }, res) => {
             ap.matchHash
           FROM nodes n
           INNER JOIN ancestor_paths ap ON n.hash = ap.parentHash
+        ),
+        deduplicated_paths AS (
+          SELECT 
+            ap.*,
+            ROW_NUMBER() OVER (PARTITION BY ap.hash ORDER BY ap.depth ASC, ap.matchHash ASC) as rn
+          FROM ancestor_paths ap
         )
         SELECT 
-          ap.*,
+          dp.*,
           (SELECT has_more FROM has_more_flag) as has_more
-        FROM ancestor_paths ap
-        ORDER BY ap.matchHash, ap.depth DESC
+        FROM deduplicated_paths dp
+        WHERE dp.rn = 1
+        ORDER BY dp.matchHash, dp.depth DESC
         `
       )
       .all(
