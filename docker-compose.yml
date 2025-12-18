@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    container_name: homework-server
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reload
+      - ./apps/server:/app/apps/server
+      - ./libs:/app/libs
+      # Mount node_modules to persist installed packages
+      - server-node-modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3000
+    command: sh -c "npx nx parse server && npx nx serve server"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: homework-frontend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source code for hot reload
+      - ./apps:/app/apps
+      - ./libs:/app/libs
+      # Mount node_modules to persist installed packages
+      - frontend-node-modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://0.0.0.0:3000
+    depends_on:
+      - server
+    command: sh -c "npx nx serve frontend"
+
+volumes:
+  server-node-modules:
+  frontend-node-modules:

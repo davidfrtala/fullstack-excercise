@@ -12,11 +12,15 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/apps/frontend',
   server: {
     port: 8000,
-    host: 'localhost',
+    host: '0.0.0.0',
   },
   preview: {
     port: 8200,
-    host: 'localhost',
+    host: '0.0.0.0',
+  },
+  hmr: {
+    host: '0.0.0.0',
+    port: 8000,
   },
   plugins: [react(), nxViteTsPaths()],
   resolve: {
