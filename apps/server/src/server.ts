@@ -7,6 +7,7 @@ import {
   buildPaginationResponse,
   type CursorData,
 } from './pagination';
+import morgan from 'morgan';
 
 const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -19,6 +20,8 @@ type EntryNody = ParsedEntry & {
 };
 
 app.use(cors());
+
+app.use(morgan('dev'));
 
 app.get('/', (req, res) => {
   res.send({ message: 'Hello API' });
@@ -191,6 +194,7 @@ app.get('/entries/search', ({ query }, res) => {
           dp.name, 
           dp.size, 
           dp.parentHash, 
+          dp.depth,
           (SELECT has_more FROM has_more_flag) as has_more
         FROM deduplicated_paths dp
         WHERE dp.rn = 1

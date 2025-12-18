@@ -17,7 +17,7 @@
             "cjs"
           ],
           "bundle": false,
-          "main": "apps/server/src/main.ts",
+          "main": "apps/server/src/server.ts",
           "tsConfig": "apps/server/tsconfig.app.json",
           "assets": [
             "apps/server/src/assets"
@@ -110,9 +110,9 @@
     }
   },
   "scripts": {
-    "parse": "ts-node src/parse.ts",
-    "start": "ts-node src/main.ts",
-    "dev": "tsx watch src/main.ts"
+    "parse": "tsx src/parse.ts",
+    "start": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts"
   },
   "dependencies": {}
 }
