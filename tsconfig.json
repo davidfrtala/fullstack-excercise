@@ -7,10 +7,10 @@
       "path": "./apps/frontend"
     },
     {
-      "path": "./apps/server"
+      "path": "./libs/ui"
     },
     {
-      "path": "./libs/ui"
+      "path": "./apps/server"
     }
   ]
 }
