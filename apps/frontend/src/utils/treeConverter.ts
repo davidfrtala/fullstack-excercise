@@ -74,7 +74,7 @@ export function useTreeDataConverter(
 
       const treeItem: ExtendedTreeDataItem = {
         id: node.hash,
-        name: `${node.name.split(' > ').pop() || node.name} (${node.size})`, // Just the segment name, size in parentheses
+        name: `${node.name} (${node.size})`, // Just the segment name, size in parentheses
         // Include children array if:
         // 1. Node has children loaded (children.length > 0), OR
         // 2. Node has size > 0 (indicating it has children, even if not loaded yet)

@@ -22,7 +22,7 @@ export function buildTree(entries: TreeNodeData[]): TreeDataItem[] {
   for (const entry of entries) {
     const node: TreeDataItem = {
       id: entry.hash,
-      name: `${entry.name.split(' > ').pop() || entry.name} (${entry.size})`,
+      name: `${entry.name} (${entry.size})`,
       children: [],
       _hasChildren: false,
     };

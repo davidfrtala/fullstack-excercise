@@ -9,6 +9,7 @@ export interface ParsedEntry {
   hash: string;
   parentHash: string | null;
   name: string;
+  path: string;
   size: number;
 }
 
@@ -31,14 +32,6 @@ const outputFilePath = path.join(ASSETS_PATH, 'out.json');
 function generateHash(wnid: string, path: string): string {
   const compositeKey = `${wnid}::${path}`;
   return createHash('md5').update(compositeKey).digest('hex');
-}
-
-/**
- * Extracts the last segment from a name (everything after the last " > ")
- */
-function extractLastSegment(name: string): string {
-  const lastIndex = name.lastIndexOf(' > ');
-  return lastIndex === -1 ? name : name.substring(lastIndex + 3);
 }
 
 /**
@@ -94,7 +87,8 @@ async function parseXml(filePath: string): Promise<ParsedEntry[]> {
         const entry: ParsedEntry = {
           hash,
           parentHash,
-          name: path,
+          path,
+          name: current.words,
           size: current.childCount,
         };
 
@@ -127,7 +121,7 @@ async function store(entries: ParsedEntry[]) {
   db.pragma('foreign_keys = OFF');
 
   const insert = db.prepare(`
-    INSERT OR REPLACE INTO nodes (hash, parentHash, name, size, lastSegment)
+    INSERT OR REPLACE INTO nodes (hash, parentHash, name, path, size)
     VALUES (?, ?, ?, ?, ?)
   `);
 
@@ -137,8 +131,8 @@ async function store(entries: ParsedEntry[]) {
         entry.hash,
         entry.parentHash,
         entry.name,
-        entry.size,
-        extractLastSegment(entry.name)
+        entry.path,
+        entry.size
       );
     }
   });

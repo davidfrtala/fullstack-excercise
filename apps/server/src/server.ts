@@ -132,13 +132,13 @@ app.get('/entries/search', ({ query }, res) => {
 
   const hasCursor = decodedCursor !== null;
 
-  // search anywhere in the lastSegment (case-insensitive)
+  // search anywhere in the name (case-insensitive)
   const searchTerm = `%${q.trim().toLowerCase()}%`;
 
   try {
     // paginate search matches and get all ancestor paths
     // Uses limit+1 to check if there are more matches
-    // Use indexed lastSegment column for fast searches (much faster than REGEXP)
+    // Use indexed name column for fast searches (much faster than REGEXP)
     const queryResult = db
       .prepare(
         `
@@ -148,7 +148,7 @@ app.get('/entries/search', ({ query }, res) => {
             0 as depth,
             ROW_NUMBER() OVER (ORDER BY LOWER(n.name) ASC, n.hash ASC) as row_num
           FROM nodes n
-          WHERE LOWER(n.lastSegment) LIKE ?
+          WHERE LOWER(n.name) LIKE ?
           ${
             hasCursor
               ? `AND (LOWER(n.name) > ? OR (LOWER(n.name) = ? AND n.hash > ?))`
@@ -166,6 +166,7 @@ app.get('/entries/search', ({ query }, res) => {
             pm.hash,
             pm.parentHash,
             pm.name,
+            pm.path,
             pm.size,
             0 as depth,
             pm.hash as matchHash
@@ -177,6 +178,7 @@ app.get('/entries/search', ({ query }, res) => {
             n.hash, 
             n.parentHash, 
             n.name, 
+            n.path, 
             n.size, 
             ap.depth + 1, 
             ap.matchHash
@@ -192,6 +194,7 @@ app.get('/entries/search', ({ query }, res) => {
         SELECT 
           dp.hash, 
           dp.name, 
+          dp.path, 
           dp.size, 
           dp.parentHash, 
           dp.depth,
