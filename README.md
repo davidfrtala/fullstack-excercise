@@ -2,16 +2,36 @@
 
 NX monorepo with a server and frontend application.
 
+## Features
+
+### Server
+
+- SAX streaming XML parser for large files
+- Composite key hashing (wnid::path) for uniqueness
+- SQLite database with adjacency list tree structure
+- REST API with lazy-loading support
+- Cursor-based pagination
+- Search endpoint with ancestor path reconstruction
+
+### Frontend
+
+- React application with hierarchical tree display
+- shadcn/ui TreeView component
+- Lazy-loading on node expansion
+- Infinite scroll pagination
+- Search with term highlighting
+- Jotai atoms for state management
+
 ## Commands
 
 ### Server
 
-- `nx parse server` - Parses the XML structure file and initializes the database
-- `nx serve server` - Starts the development server on port 3000
+- `npx nx parse server` - Parses the XML structure file and initializes the database
+- `npx nx serve server` - Starts the development server on port 3000
 
 ### Frontend
 
-- `nx serve frontend` - Starts the development server on port 8000
+- `npx nx serve frontend` - Starts the development server on port 8000
 
 ## Running Locally
 
@@ -24,18 +44,18 @@ NX monorepo with a server and frontend application.
 2. Initialize the database:
 
    ```bash
-   nx parse server
+   npx nx parse server
    ```
 
 3. Start the server:
 
    ```bash
-   nx serve server
+   npx nx serve server
    ```
 
 4. In a separate terminal, start the frontend:
    ```bash
-   nx serve frontend
+   npx nx serve frontend
    ```
 
 The server will be available at `http://localhost:3000` and the frontend at `http://localhost:8000`.
